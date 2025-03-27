@@ -54,8 +54,8 @@ matchesMask = mask.ravel().tolist()
 h, w = query.shape[:2]
 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
+# transform query pts using homography transformation matrix
 dst = cv2.perspectiveTransform(pts,M)
-print(dst)
 dst += [[[50,50]],[[50,0]], [[50,0]], [[0,50]]]  # adding offset
 
 # Draw bounding box in Red
