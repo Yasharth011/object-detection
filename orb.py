@@ -55,17 +55,12 @@ h, w = query.shape[:2]
 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
 dst = cv2.perspectiveTransform(pts,M)
-dst += (w, 0)  # adding offset
-
-draw_params = dict(matchColor = (0,255,0), # draw matches in green color
-               singlePointColor = None,
-               matchesMask = matchesMask, # draw only inliers
-               flags = 2)
-
-img3 = cv2.drawMatches(query, query_keypoints, train, train_keypoints,good_matches, None,**draw_params)
+print(dst)
+dst += [[[50,50]],[[50,0]], [[50,0]], [[0,50]]]  # adding offset
 
 # Draw bounding box in Red
-img3 = cv2.polylines(img3, [np.int32(dst)], True, (0,0,255),3, cv2.LINE_AA)
-img3 = cv2.resize(img3, (400,400))
+img3 = cv2.polylines(train, [np.int32(dst)], True, (0,0,255),3, cv2.LINE_AA)
+img3 = cv2.resize(img3, (400,400)) # resize image
+
 cv2.imshow("result", img3)
 cv2.waitKey()
