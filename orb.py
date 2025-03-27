@@ -1,6 +1,7 @@
 import argparse
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np 
 
 parser = argparse.ArgumentParser()
 
@@ -26,15 +27,30 @@ train_keypoints, train_descriptors = orb.detectAndCompute(gray_query, None)
 matcher = cv2.BFMatcher()
 matches = matcher.match(query_descriptors, train_descriptors)
 
-final_img = cv2.drawMatches(
-    query, query_keypoints, train, train_keypoints, matches[:20], None
-)
+good_matches = matches[:10]
 
+src_pts = np.float32([query_keypoints[m.queryIdx].pt for m in good_matches])
+dst_pts = np.float32([ train_keypoints[m.trainIdx].pt for m in good_matches])
 
-# query_with_orb = cv2.drawKeypoints(
-#     query, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS
-# )
+M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+matchesMask = mask.ravel().tolist()
 
-plt.imshow(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB))
+h, w = query.shape[:2]
+pts = np.float32()
+pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
-plt.pause(10)
+dst = cv2.perspectiveTransform(pts,M)
+dst += (w, 0)  # adding offset
+
+draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+               singlePointColor = None,
+               matchesMask = matchesMask, # draw only inliers
+               flags = 2)
+
+img3 = cv2.drawMatches(query, query_keypoints, train, train_keypoints,good_matches, None,**draw_params)
+
+# Draw bounding box in Red
+img3 = cv2.polylines(img3, [np.int32(dst)], True, (0,0,255),3, cv2.LINE_AA)
+img3 = cv2.resize(img3, (400,400))
+cv2.imshow("result", img3)
+cv2.waitKey()
